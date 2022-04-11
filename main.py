@@ -1,16 +1,23 @@
-# This is a sample Python script.
+from fastapi import FastAPI, status, Response
+import json
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+app = FastAPI()
+
+with open('refined_foods.json', 'rb') as foods:
+    data = json.load(foods)
+    print("done reading JSON...")
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+@app.get("/")
+async def root():
+    return {"greeting": "welcome to the api!"}
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+@app.get("/food/{gtinUpc}")
+async def get_ingd(gtinUpc, response: Response):
+    try:
+        result = data[gtinUpc]["ingredients"]
+    except KeyError:
+        result = {"err": f"No food with gtinUpc: {gtinUpc}"}
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return result
