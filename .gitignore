@@ -228,3 +228,4 @@ fabric.properties
 .idea/vcs.xml
 FoodData_Central_branded_food_json_2021-10-28.json
 refined_foods.json
+*.db
