@@ -1,28 +1,18 @@
-from select import select
-from click import command
-from fastapi import FastAPI, status, Response
+from fastapi import FastAPI, status, Response, Depends
+from fastapi_simple_security import api_key_router, api_key_security
 import vegan_checker as vc
-import json, re
+import re
 import aiosqlite
 
-
 app = FastAPI()
-
-'''
-print("loading json...")
-with open('refined_foods.json', 'rb') as foods:
-    data = json.load(foods)
-print("done!")
-'''
-
-
+app.include_router(api_key_router, prefix="/auth", tags=["_auth"])
 
 @app.get("/")
 async def root():
     return {"greeting": "welcome to the api!"}
 
 
-@app.get("/food/{gtinUpc}")
+@app.get("/food/{gtinUpc}", dependencies=[Depends(api_key_security)])
 async def get_ingd(gtinUpc, response: Response):
     connection_obj =  await aiosqlite.connect('foods.db')
     cursor_obj = await connection_obj.cursor()
@@ -36,9 +26,8 @@ async def get_ingd(gtinUpc, response: Response):
     return result
 
 
-@app.get("/vegan_ingredents/{gtinUpc}")
+@app.get("/vegan_ingredents/{gtinUpc}", dependencies=[Depends(api_key_security)])
 async def get_ingd(gtinUpc, response: Response):
-
     try:
         connection_obj =  await aiosqlite.connect('foods.db')
         cursor_obj = await connection_obj.cursor()
@@ -48,8 +37,9 @@ async def get_ingd(gtinUpc, response: Response):
         ingreds = await ing_spliter(data[0][0])
         name = data[0][1]
 
-        not_vegan = await vc.contains_nonvegan(ingreds)
         maybe_vegan = await vc.contains_maybevegan(ingreds)
+        not_vegan = await vc.contains_nonvegan(ingreds)
+        not_vegan = [ing for ing in not_vegan if ing not in maybe_vegan]
         vegan =  [i for i in ingreds if i not in not_vegan and i not in maybe_vegan]
         result = {  
                     "name" : name,
