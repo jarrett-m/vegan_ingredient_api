@@ -1,17 +1,18 @@
 from fastapi import FastAPI, status, Response, Depends
+from fastapi_simple_security import api_key_router, api_key_security
 import vegan_checker as vc
 import re
 import aiosqlite
 
 app = FastAPI()
-api_key = "API_TOKEN_HERE"
+app.include_router(api_key_router, prefix="/auth", tags=["_auth"])
 
 @app.get("/")
 async def root():
     return {"greeting": "welcome to the api!"}
 
 
-@app.get("/food/{gtinUpc}", dependencies=[Depends(api_key)])
+@app.get("/food/{gtinUpc}", dependencies=[Depends(api_key_security)])
 async def get_ingd(gtinUpc, response: Response):
     connection_obj =  await aiosqlite.connect('foods.db')
     cursor_obj = await connection_obj.cursor()
@@ -25,7 +26,7 @@ async def get_ingd(gtinUpc, response: Response):
     return result
 
 
-@app.get("/vegan_ingredents/{gtinUpc}", dependencies=[Depends(api_key)])
+@app.get("/vegan_ingredents/{gtinUpc}", dependencies=[Depends(api_key_security)])
 async def get_ingd(gtinUpc, response: Response):
     try:
         connection_obj =  await aiosqlite.connect('foods.db')
