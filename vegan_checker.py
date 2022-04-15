@@ -55,15 +55,20 @@ async def contains_maybevegan(ingredients_to_check):
             if( findWholeWord(maybe_veg)(ingredent) is None):
                 continue
             elif maybe_veg in ingredent:
+                is_plant_based = False
                 for plantbased_ing in plantbased:
                     if plantbased_ing in ingredent:
+                        is_plant_based = True
                         break
+                if not is_plant_based:
                     return_list.append(ingredent)
-                    break
+                    is_plant_based = False
+
             if ingredent in return_list:
                 break
 
     return return_list
+
 '''
 def contains_maybevegan(ingredients_to_check):
     ingredients_to_check = [i.strip().lower() for i in ingredients_to_check]
@@ -75,13 +80,18 @@ def contains_maybevegan(ingredients_to_check):
             if( findWholeWord(maybe_veg)(ingredent) is None):
                 continue
             elif maybe_veg in ingredent:
+                is_plant_based = False
                 for plantbased_ing in plantbased:
                     if plantbased_ing in ingredent:
+                        is_plant_based = True
                         break
+                if not is_plant_based:
                     return_list.append(ingredent)
-                    break
+                    is_plant_based = False
+
             if ingredent in return_list:
                 break
+
 
     return return_list
 
@@ -109,7 +119,7 @@ def contains_nonvegan(ingredients_to_check):
 
     return return_list
 
-ingreds = ["almondmilk (filtered water, almonds)", "vitamin and mineral blend (calcium carbonate, vitamin e acetate, vitamin a palmitate, vitamin d2)", "sea salt", "locust bean gum" ,"gellan gum", "ascorbic acid (to protect freshness)", "natural flavor."]
+ingreds = ["sunflower lecithin"]
 
 not_vegan =  contains_nonvegan(ingreds)
 maybe_vegan = contains_maybevegan(ingreds)
