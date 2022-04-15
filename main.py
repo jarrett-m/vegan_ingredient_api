@@ -1,19 +1,18 @@
-from fastapi import FastAPI, status, Response, Depends
-from fastapi_simple_security import api_key_router, api_key_security
+from fastapi import FastAPI, status, Response
 import vegan_checker as vc
 import re
 import aiosqlite
 
+
 app = FastAPI()
-app.include_router(api_key_router, prefix="/auth", tags=["_auth"])
 
 @app.get("/")
 async def root():
-    return {"greeting": "welcome to the api!"}
+    return "Welcome to the vegan check api!"
 
 
-@app.get("/food/{gtinUpc}", dependencies=[Depends(api_key_security)])
-async def get_ingd(gtinUpc, response: Response):
+@app.get("/food/{gtinUpc}")
+async def get_open_api_endpoint(gtinUpc, response: Response):
     connection_obj =  await aiosqlite.connect('foods.db')
     cursor_obj = await connection_obj.cursor()
     try:
@@ -26,8 +25,8 @@ async def get_ingd(gtinUpc, response: Response):
     return result
 
 
-@app.get("/vegan_ingredents/{gtinUpc}", dependencies=[Depends(api_key_security)])
-async def get_ingd(gtinUpc, response: Response):
+@app.get("/vegan_ingredents/{gtinUpc}")
+async def get_open_api_endpoint(gtinUpc, response: Response):
     try:
         connection_obj =  await aiosqlite.connect('foods.db')
         cursor_obj = await connection_obj.cursor()
@@ -37,11 +36,12 @@ async def get_ingd(gtinUpc, response: Response):
         ingreds = await ing_spliter(data[0][0])
         name = data[0][1]
 
-        maybe_vegan = await vc.contains_maybevegan(ingreds)
         not_vegan = await vc.contains_nonvegan(ingreds)
-        not_vegan = [ing for ing in not_vegan if ing not in maybe_vegan]
+        maybe_vegan = await vc.contains_maybevegan(ingreds)
+        maybe_vegan = [ing for ing in maybe_vegan if ing not in not_vegan]
         vegan =  [i for i in ingreds if i not in not_vegan and i not in maybe_vegan]
-        result = {  
+
+        result = {
                     "name" : name,
                     "not vegan" : not_vegan,
                     "maybe vegan" : maybe_vegan,
@@ -57,3 +57,4 @@ async def get_ingd(gtinUpc, response: Response):
 async def ing_spliter(ingredients):
     ingredients = ingredients.lower()
     return re.split(r',\s*(?![^()]*\))', str(ingredients))
+
