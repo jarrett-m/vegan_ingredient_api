@@ -119,7 +119,8 @@ def contains_nonvegan(ingredients_to_check):
 
     return return_list
 
-ingreds = ["sunflower lecithin"]
+
+ingreds = ["sunflower lecithin, vinegar poweder "]
 
 not_vegan =  contains_nonvegan(ingreds)
 maybe_vegan = contains_maybevegan(ingreds)
