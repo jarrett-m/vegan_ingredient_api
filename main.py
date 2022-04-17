@@ -1,5 +1,4 @@
 from fastapi import FastAPI, status, Response
-from sympy import false
 import vegan_checker as vc
 import re
 import aiosqlite
@@ -61,7 +60,6 @@ async def ing_spliter(ingredients):
     ingredients = ingredients.replace("[", "(")
     ingredients = ingredients.replace("]", ")")
 
-    #result = re.split(r",(?!(?:[^,\[\]]+,)*[^,\[\]]+])", ingredients, 0)
     result = re.findall(r"(\w+?) \(\w+?\)", ingredients)
 
     ing = []
@@ -83,8 +81,6 @@ async def siing_spliter(ingredients):
     ingredients = ingredients.replace("[", "(")
     ingredients = ingredients.replace("]", ")")
 
-    #result = re.split(r",(?!(?:[^,\[\]]+,)*[^,\[\]]+])", ingredients, 0)
-    #result = re.findall(r"(\w+?) \(\w+?\)", ingredients)
     result = []
     i = 0
     pos = 0
