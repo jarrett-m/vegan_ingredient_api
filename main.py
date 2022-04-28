@@ -16,15 +16,15 @@ async def root():
 @app.get("/food/{gtinUpc}")
 async def get_open_api_endpoint(gtinUpc, response: Response, req: Request):
 
-    response = await authCheck(req, response) if await authCheck(req, response) is not None else None
-    
-    if response.status_code != status.HTTP_200_OK:
-        result = {"err": "Unauthorized, gamer. better luck next time"}
-        return result
-
-    connection_obj =  await aiosqlite.connect('foods.db')
-    cursor_obj = await connection_obj.cursor()
     try:
+        response = await authCheck(req, response)
+
+        if response.status_code != status.HTTP_200_OK:
+            result = {"err": "Unauthorized, gamer. better luck next time"}
+            return result
+
+        connection_obj =  await aiosqlite.connect('foods.db')
+        cursor_obj = await connection_obj.cursor()
         await cursor_obj.execute("SELECT ingredients FROM foods WHERE gtinUpc=?", (gtinUpc,))
         result = await cursor_obj.fetchall()
         result = result[0]
@@ -37,13 +37,13 @@ async def get_open_api_endpoint(gtinUpc, response: Response, req: Request):
 @app.get("/vegan_ingredents/{gtinUpc}")
 async def get_open_api_endpoint(gtinUpc, response: Response, req: Request):
 
-    response = await authCheck(req, response) if (await authCheck(req, response) is not None) else None
-
-    if response.status_code != status.HTTP_200_OK:
-        result = {"err": "Unauthorized, gamer. better luck next time"}
-        return result
-
     try:
+        response = await authCheck(req, response)
+
+        if response.status_code != status.HTTP_200_OK:
+            result = {"err": "Unauthorized, gamer. better luck next time"}
+            return result
+
         connection_obj =  await aiosqlite.connect('foods.db')
         cursor_obj = await connection_obj.cursor()
         await cursor_obj.execute("SELECT ingredients, description FROM foods WHERE gtinUpc=?", (gtinUpc,))
@@ -102,14 +102,14 @@ async def siing_spliter(ingredients):
     parth_pos = 0
     parth_c_pos = 0
     parth_count = 0
-    
+
     for char in ingredients:
-    
+
         if char == "(":
             parth_count += 1
             if parth_count == 1:
                 parth_pos = pos
-    
+
         elif char == ")":
             parth_count -= 1
             if parth_count == 0:
@@ -123,7 +123,7 @@ async def siing_spliter(ingredients):
                 result.extend(await siing_spliter(recur_this[parth_pos+2:parth_c_pos+1]))
                 i = len(result)
                 pos = 0
-        else:    
+        else:
             try:
                 result[i] += char
                 pos += 1
@@ -133,7 +133,7 @@ async def siing_spliter(ingredients):
                     pos = 0
                 else:
                     continue
-    
+
     if "(" in result[-1] and "," in result[-1]:
         recur_this = result[-1]
         result.pop()
@@ -149,8 +149,12 @@ async def authCheck(req, response):
     if (auth_token != auth_key):
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return response
+    response.status_code = status.HTTP_200_OK
+    return response
+
     
 
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
+    
