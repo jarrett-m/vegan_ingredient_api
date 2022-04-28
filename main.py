@@ -1,3 +1,4 @@
+from ast import Try
 from fastapi import FastAPI, status, Response, Request
 import vegan_checker as vc
 import re
@@ -28,6 +29,28 @@ async def get_open_api_endpoint(food, response: Response, req: Request):
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
     return result
+
+@app.get("/list_of_ing/{foods}")
+async def get_open_api_endpoint(foods, response: Response, req: Request):
+
+    try:
+        ingreds = await siing_spliter(foods)
+        not_vegan = await vc.contains_nonvegan(ingreds)
+        maybe_vegan = await vc.contains_maybevegan(ingreds)
+        maybe_vegan = [ing.lower() for ing in maybe_vegan if ing not in not_vegan]
+        vegan =  [i.lower() for i in ingreds if i not in not_vegan and i not in maybe_vegan]
+
+        result = {
+                    "not vegan" : not_vegan,
+                    "maybe vegan" : maybe_vegan,
+                    "vegan" : vegan
+                }
+    except:
+        result = "error"
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    return result
+
 
 
 @app.get("/vegan_ingredents/{gtinUpc}")
@@ -91,7 +114,10 @@ async def siing_spliter(ingredients):
     ingredients = ingredients.replace(";", ",")
     ingredients = ingredients.replace("[", "(")
     ingredients = ingredients.replace("]", ")")
+    ingredients = [ing for ing.strip() in ingredients]
+    return await siing_helper(ingredients)
 
+async def siing_helper(ingredients):
     result = []
     i = 0
     pos = 0
@@ -148,9 +174,8 @@ async def authCheck(req, response):
     response.status_code = status.HTTP_200_OK
     return response
 
-    
+
 
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
-    
