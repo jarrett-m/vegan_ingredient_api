@@ -13,24 +13,20 @@ async def root():
     return "Welcome to the vegan check api!"
 
 
-@app.get("/food/{gtinUpc}")
-async def get_open_api_endpoint(gtinUpc, response: Response, req: Request):
+@app.get("/food/{food}")
+async def get_open_api_endpoint(food, response: Response, req: Request):
 
     try:
         response = await authCheck(req, response)
-
-        if response.status_code != status.HTTP_200_OK:
-            result = {"err": "Unauthorized, gamer. better luck next time"}
-            return result
-
-        connection_obj =  await aiosqlite.connect('foods.db')
-        cursor_obj = await connection_obj.cursor()
-        await cursor_obj.execute("SELECT ingredients FROM foods WHERE gtinUpc=?", (gtinUpc,))
-        result = await cursor_obj.fetchall()
-        result = result[0]
-    except KeyError:
-        result = {"err": f"No food with gtinUpc: {gtinUpc}"}
+        if(await vc.contains_nonvegan([food])):
+            return "not"
+        if(await vc.contains_maybevegan([food])):
+            return "maybe"
+        return "vegan"
+    except:
+        result = "unauthorized"
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
     return result
 
 
