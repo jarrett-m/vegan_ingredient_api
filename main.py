@@ -1,4 +1,4 @@
-from fastapi import FastAPI, status, Response
+from fastapi import FastAPI, status, Response, Request
 import vegan_checker as vc
 import re
 import aiosqlite
@@ -6,6 +6,7 @@ import uvicorn
 
 
 app = FastAPI()
+auth_key = "testKey" #replace key
 
 @app.get("/")
 async def root():
@@ -13,7 +14,14 @@ async def root():
 
 
 @app.get("/food/{gtinUpc}")
-async def get_open_api_endpoint(gtinUpc, response: Response):
+async def get_open_api_endpoint(gtinUpc, response: Response, req: Request):
+
+    response = await authCheck(req, response) if await authCheck(req, response) is not None else None
+    
+    if response.status_code != status.HTTP_200_OK:
+        result = {"err": "Unauthorized, gamer. better luck next time"}
+        return result
+
     connection_obj =  await aiosqlite.connect('foods.db')
     cursor_obj = await connection_obj.cursor()
     try:
@@ -27,7 +35,14 @@ async def get_open_api_endpoint(gtinUpc, response: Response):
 
 
 @app.get("/vegan_ingredents/{gtinUpc}")
-async def get_open_api_endpoint(gtinUpc, response: Response):
+async def get_open_api_endpoint(gtinUpc, response: Response, req: Request):
+
+    response = await authCheck(req, response) if (await authCheck(req, response) is not None) else None
+
+    if response.status_code != status.HTTP_200_OK:
+        result = {"err": "Unauthorized, gamer. better luck next time"}
+        return result
+
     try:
         connection_obj =  await aiosqlite.connect('foods.db')
         cursor_obj = await connection_obj.cursor()
@@ -127,6 +142,15 @@ async def siing_spliter(ingredients):
         pos = 0
 
     return list(set(result))
+
+async def authCheck(req, response):
+    auth_token = req.headers["authorization"]
+
+    if (auth_token != auth_key):
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return response
+    
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
